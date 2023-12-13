@@ -1,0 +1,29 @@
+name: backend
+description: An new Dart Frog application
+version: 1.0.0+1
+publish_to: none
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+
+dependencies:
+
+  dart_frog: ^1.0.0
+  dotenv: ^4.2.0
+  either_dart: ^1.0.0
+  postgres: ^3.0.3
+  uuid: ^4.3.1
+
+dev_dependencies:
+  analyzer: ^6.2.0 #This package provides a library that performs static analysis of Dart code. It is useful for tool integration and embedding.
+
+  # For generate files
+  build_runner: ^2.4.7
+  freezed: ^2.4.5 # Code generation for immutable classes that has a simple syntax/API without compromising on the features.
+  freezed_annotation: ^2.4.1
+  json_serializable: ^6.3.1 # Automatically generate code for converting to and from JSON by annotating Dart classes.
+
+  mocktail: ^1.0.0
+  test: ^1.19.2
+  very_good_analysis: ^5.1.0
+
