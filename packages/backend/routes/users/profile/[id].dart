@@ -7,12 +7,10 @@ import 'package:backend/response/response.dart';
 import 'package:backend/response/result.dart';
 import 'package:dart_frog/dart_frog.dart';
 
-Future<Response> onRequest(RequestContext context) async {
+Future<Response> onRequest(RequestContext context, String id) async {
   switch (context.request.method) {
-    case HttpMethod.post:
-      return _onCreateUser(context);
-    case HttpMethod.get:
-      return _onGetUsers(context);
+    case HttpMethod.patch:
+      return _onUpdateUser(context, id);
     default:
       return Response.json(
         statusCode: HttpStatus.methodNotAllowed,
@@ -28,42 +26,11 @@ Future<Response> onRequest(RequestContext context) async {
   }
 }
 
-Future<Response> _onGetUsers(RequestContext context) async {
+Future<Response> _onUpdateUser(RequestContext context, String id) async {
   final controler = context.read<UserControler>();
-  final response = await controler.getUsers();
-  if (response.isLeft) {
-    return Response.json(
-      statusCode: response.left.statusCode,
-      body: YinResponse(
-        result: YinFailure(
-          errorCode: response.left.errorCode,
-          time: DateTime.now(),
-          statusCode: response.left.statusCode,
-        ),
-        data: {},
-      ).toMap(),
-    );
-  } else {
-    return Response.json(
-      body: YinResponse(
-        result: YinSuccess(
-          time: DateTime.now(),
-        ),
-        dataList: response.right
-            .map((e) => e.copyWith(password: '******').toJson())
-            .toList(),
-      ).toMap(),
-    );
-  }
-}
-
-Future<Response> _onCreateUser(RequestContext context) async {
   final body = await context.request.body();
 
-  final controler = context.read<UserControler>();
-  final response = await controler.createUserProfile(
-    body: body,
-  );
+  final response = await controler.updateUserProfile(body: body, id: id);
   if (response.isLeft) {
     return Response.json(
       statusCode: response.left.statusCode,

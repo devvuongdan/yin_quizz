@@ -1,4 +1,5 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first, avoid_dynamic_calls, inference_failure_on_collection_literal, lines_longer_than_80_chars
+import 'package:backend/exceptions/database_exception.dart';
 import 'package:postgres/postgres.dart';
 
 class PostgresDatabase {
@@ -66,16 +67,69 @@ class PostgresDatabase {
 
       return result;
     } catch (e) {
-      throw UnimplementedError();
+      throw DataBaseException();
+    }
+  }
+
+  Future<Result> update({
+    required String tableName,
+    required Map<String, dynamic> objectToMap,
+  }) async {
+    try {
+      await createTableIfNotExist(
+        tableName: tableName,
+        objectToMap: objectToMap,
+      );
+      final queries = <String>[];
+      for (final key in objectToMap.keys) {
+        if (key != 'uid' && key != 'created_at') {
+          queries.add(
+            '$key=@$key',
+          );
+        }
+      }
+
+      final paramString = queries.join(',');
+      final queryString = 'UPDATE $tableName SET $paramString WHERE id=@id';
+      final updateResult = await connection.execute(
+        Sql.named(queryString),
+        parameters: objectToMap
+          ..removeWhere(
+            (key, value) => key == 'created_at',
+          ),
+      );
+
+      return updateResult;
+    } catch (e) {
+      throw DataBaseException();
     }
   }
 
   Future<List<Map<String, dynamic>>> select({
     required String tableName,
   }) async {
-    final result = await connection.execute(
-      'SELECT * FROM $tableName',
-    );
-    return result.map((element) => element.toColumnMap()).toList();
+    try {
+      final result = await connection.execute(
+        'SELECT * FROM $tableName',
+      );
+      return result.map((element) => element.toColumnMap()).toList();
+    } catch (e) {
+      throw DataBaseException();
+    }
+  }
+
+  Future<String> delete({
+    required String tableName,
+    required String id,
+  }) async {
+    try {
+      await connection.execute(
+        Sql.named('DELETE FROM $tableName WHERE id=@id'),
+        parameters: {'id': id},
+      );
+      return id;
+    } catch (e) {
+      throw DataBaseException();
+    }
   }
 }

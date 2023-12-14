@@ -1,13 +1,13 @@
 // ignore_for_file:  sort_constructors_first, avoid_dynamic_calls, avoid_print
 // ignore_for_file: public_member_api_docs
 
-import 'package:backend/configs/constants.dart';
-import 'package:backend/exceptions/database_exception.dart';
 import 'package:backend/exceptions/invalid_input_exception.dart';
-import 'package:backend/exceptions/unknown_exception.dart';
+import 'package:backend/exceptions/notfound_exception.dart';
 import 'package:backend/features/users/model/insert_user_dto/insert_user_dto.dart';
+import 'package:backend/features/users/model/update_user_dto/update_user_dto.dart';
 import 'package:backend/features/users/model/user.dart';
 import 'package:backend/helpers/database_helper.dart';
+import 'package:backend/services/encrypt.dart';
 import 'package:uuid/uuid.dart';
 
 class UserDataSource {
@@ -36,18 +36,12 @@ class UserDataSource {
       );
       final userDb = await getUserByUsername(dto.username ?? '');
       if (userDb != null) {
-        throw InvalidInputException(
-          errorCode: '${Strings.invalidUsernameErrorCode} : Username existed',
-          time: DateTime.now(),
-        );
+        throw UsernameExistException();
       }
 
-      final userDbX = await getUserByUsername(dto.username ?? '');
+      final userDbX = await getUserById(newUser.id);
       if (userDbX != null) {
-        throw UnknownException(
-          errorCode: 'random-user-id-existed: ${newUser.id}',
-          time: DateTime.now(),
-        );
+        throw DuplicateUidException();
       }
 
       await _database.insert(
@@ -55,16 +49,38 @@ class UserDataSource {
         objectToMap: newUser.toJson(),
       );
       return newUser;
-    } on InvalidInputException catch (_) {
+    } catch (_) {
       rethrow;
-    } on UnknownException catch (_) {
+    }
+  }
+
+  Future<YinUser> updateUser({
+    required UpdateYinUserDto dto,
+    required String id,
+  }) async {
+    try {
+      final user = await getUserById(id);
+
+      if (user != null) {
+        final newUser = user.copyWith(
+          givenName: dto.givenName ?? '',
+          password: EncryptUtil.generateMd5(dto.password ?? ''),
+          updateAt: DateTime.now(),
+          updatePwAt:
+              EncryptUtil.generateMd5(dto.password ?? '') != user.password
+                  ? DateTime.now()
+                  : user.updatePwAt,
+        );
+        await _database.update(
+          tableName: tableName,
+          objectToMap: newUser.toJson(),
+        );
+        return user;
+      } else {
+        throw NotFoundException();
+      }
+    } catch (_) {
       rethrow;
-    } catch (e, _) {
-      print(e);
-      print(_);
-      throw DataBaseException(
-        time: DateTime.now(),
-      );
     }
   }
 
@@ -77,11 +93,8 @@ class UserDataSource {
       } else {
         return null;
       }
-    } catch (e) {
-      print(e);
-      throw DataBaseException(
-        time: DateTime.now(),
-      );
+    } catch (_) {
+      rethrow;
     }
   }
 
@@ -95,11 +108,8 @@ class UserDataSource {
       } else {
         return null;
       }
-    } catch (e) {
-      print(e);
-      throw DataBaseException(
-        time: DateTime.now(),
-      );
+    } catch (_) {
+      rethrow;
     }
   }
 
@@ -110,12 +120,18 @@ class UserDataSource {
         return YinUser.fromJson(e);
       }).toList();
       return users;
-    } catch (e, _) {
-      print(e);
-      print(_);
-      throw DataBaseException(
-        time: DateTime.now(),
-      );
+    } catch (_) {
+      rethrow;
+    }
+  }
+
+  Future<String> deleteUser(String id) async {
+    try {
+      final result = await _database.delete(tableName: tableName, id: id);
+
+      return result;
+    } catch (_) {
+      rethrow;
     }
   }
 }

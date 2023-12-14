@@ -1,4 +1,4 @@
-// ignore_for_file: public_member_api_docs
+// ignore_for_file: public_member_api_docs, lines_longer_than_80_chars
 
 import 'package:dotenv/dotenv.dart';
 import 'package:postgres/postgres.dart';

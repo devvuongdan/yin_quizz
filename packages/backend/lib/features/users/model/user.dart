@@ -26,7 +26,7 @@ class YinUser with _$YinUser {
     @DateTimeConverter()
     @JsonKey(name: 'updated_pw_at')
     required DateTime updatePwAt,
-    @Default('') @JsonKey(includeToJson: false) String password,
+    @Default('') String password,
   }) = _YinUser;
 
   /// {@macro user}
