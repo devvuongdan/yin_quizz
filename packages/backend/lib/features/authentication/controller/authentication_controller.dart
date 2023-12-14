@@ -6,17 +6,17 @@ import 'package:backend/configs/constants.dart';
 import 'package:backend/exceptions/database_exception.dart';
 import 'package:backend/exceptions/invalid_input_exception.dart';
 import 'package:backend/exceptions/notfound_exception.dart';
+import 'package:backend/exceptions/unauthorized_exception.dart';
 import 'package:backend/features/authentication/model/login_dto/login_dto.dart';
 import 'package:backend/features/authentication/model/token.dart';
 import 'package:backend/features/authentication/repository/authentication_repository.dart';
+import 'package:backend/features/users/model/insert_user_dto/insert_user_dto.dart';
 import 'package:backend/features/users/model/user.dart';
 import 'package:backend/features/users/repository/user_repository.dart';
 import 'package:backend/response/result.dart';
 import 'package:backend/services/encrypt.dart';
 import 'package:backend/services/jwt_service.dart';
 import 'package:either_dart/either.dart';
-
-import 'package:backend/features/users/model/insert_user_dto/insert_user_dto.dart';
 
 class AuthenticationController {
   final UserRepository userRepository;
@@ -27,7 +27,10 @@ class AuthenticationController {
     required this.authenticationRepository,
   });
 
-  Future<Either<YinFailure, YinToken>> doLogin(String body) async {
+  Future<Either<YinFailure, YinToken>> doLogin(
+    String body,
+    Map<String, dynamic> headers,
+  ) async {
     final exceptions = <Type, int>{
       InvalidInputException: 400,
       InvalidUsernameException: 400,
@@ -37,7 +40,7 @@ class AuthenticationController {
     try {
       final dto = LoginDto.fromJson(
         jsonDecode(body) as Map<String, dynamic>,
-      );
+      ).copyWith(deviceId: headers['device_id'].toString());
       if ((dto.username ?? '').length < 6) {
         throw InvalidUsernameException();
       }
@@ -59,9 +62,11 @@ class AuthenticationController {
             'id': users[idx].id,
             'username': users[idx].username,
             'password': users[idx].password,
-            'exp': now.add(const Duration(hours: 1)).toIso8601String(),
+            //'exp': now.add(const Duration(minutes: 5)).millisecondsSinceEpoch,
+            'device_id': dto.deviceId,
           };
           final accessToken = JWTService(AppConstant.env).sign(map);
+
           // final refreshToken = JWTService(AppConstant.env).sign(
           //   map,
           //   key: AppConstant.env['JWT_SECRET_REFRESH_TOKEN'],
@@ -195,6 +200,58 @@ class AuthenticationController {
       final user = await userRepository.createUserProfile(dto: dto);
 
       return Right(user);
+    } catch (e) {
+      return Left(
+        YinFailure(
+          time: DateTime.now(),
+          errorCode: exceptions.keys.contains(e.runtimeType)
+              ? 'Error: ${e.runtimeType}!'
+              : 'Un-Handled-Exception!',
+          statusCode: exceptions.keys.contains(e.runtimeType)
+              ? (exceptions[e.runtimeType] ?? 500)
+              : 501,
+        ),
+      );
+    }
+  }
+
+  Future<Either<YinFailure, YinUser>> decodeJWT({
+    required Map<String, dynamic> headers,
+  }) async {
+    final exceptions = <Type, int>{
+      InvalidInputException: 400,
+      InvalidUsernameException: 400,
+      UsernameExistException: 400,
+      InvalidPasswordException: 400,
+      DataBaseException: 500,
+      UnauthorizedException: 401,
+    };
+
+    try {
+      final authHeader = headers[HttpHeaders.authorizationHeader] ?? '';
+      final accessToken = authHeader.toString().replaceFirst('Bearer ', '');
+      final tokens = await authenticationRepository.getTokens();
+      final index =
+          tokens.indexWhere((element) => element.accessToken == accessToken);
+      if (index < 0) {
+        throw UnauthorizedException();
+      } else {
+        if (tokens[index].exp.millisecondsSinceEpoch <=
+            DateTime.now().millisecondsSinceEpoch) {
+          throw UnauthorizedException();
+        }
+        final newToken = tokens[index]
+            .copyWith(exp: DateTime.now().add(const Duration(minutes: 5)));
+        await authenticationRepository.updateToken(
+          userId: tokens[index].userId,
+          newToken: newToken,
+        );
+        final users = await userRepository.getUsers();
+        final result =
+            users.firstWhere((element) => element.id == tokens[index].userId);
+
+        return Right(result);
+      }
     } catch (e) {
       return Left(
         YinFailure(

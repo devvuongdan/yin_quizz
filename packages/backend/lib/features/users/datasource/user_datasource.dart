@@ -75,7 +75,7 @@ class UserDataSource {
           tableName: tableName,
           objectToMap: newUser.toJson(),
         );
-        return user;
+        return newUser;
       } else {
         throw NotFoundException();
       }

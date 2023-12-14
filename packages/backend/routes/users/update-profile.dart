@@ -1,15 +1,16 @@
 // ignore_for_file: no_default_cases
 
 import 'dart:io';
-import 'package:backend/features/authentication/controller/authentication_controller.dart';
+import 'package:backend/features/users/controller/user_controller.dart';
+import 'package:backend/features/users/model/user.dart';
 import 'package:backend/response/response.dart';
 import 'package:backend/response/result.dart';
 import 'package:dart_frog/dart_frog.dart';
 
 Future<Response> onRequest(RequestContext context) async {
   switch (context.request.method) {
-    case HttpMethod.get:
-      return _onGetTokens(context);
+    case HttpMethod.patch:
+      return _onUpdateUser(context);
     default:
       return Response.json(
         statusCode: HttpStatus.methodNotAllowed,
@@ -25,9 +26,12 @@ Future<Response> onRequest(RequestContext context) async {
   }
 }
 
-Future<Response> _onGetTokens(RequestContext context) async {
-  final controller = context.read<AuthenticationController>();
-  final response = await controller.getTokens();
+Future<Response> _onUpdateUser(RequestContext context) async {
+  final controler = context.read<UserControler>();
+  final body = await context.request.body();
+  final id = context.read<YinUser>().id;
+
+  final response = await controler.updateUserProfile(body: body, id: id);
   if (response.isLeft) {
     return Response.json(
       statusCode: response.left.statusCode,
@@ -46,7 +50,7 @@ Future<Response> _onGetTokens(RequestContext context) async {
         result: YinSuccess(
           time: DateTime.now(),
         ),
-        dataList: response.right.map((e) => e.toJson()).toList(),
+        data: response.right.copyWith(password: '******').toJson(),
       ).toMap(),
     );
   }

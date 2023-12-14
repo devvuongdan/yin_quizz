@@ -1,16 +1,16 @@
 // ignore_for_file: no_default_cases
 
 import 'dart:io';
-
-import 'package:backend/features/users/controller/user_controller.dart';
+import 'package:backend/features/users/datasource/user_datasource.dart';
+import 'package:backend/helpers/database_helper.dart';
 import 'package:backend/response/response.dart';
 import 'package:backend/response/result.dart';
 import 'package:dart_frog/dart_frog.dart';
 
-Future<Response> onRequest(RequestContext context, String id) async {
+Future<Response> onRequest(RequestContext context) async {
   switch (context.request.method) {
-    case HttpMethod.patch:
-      return _onUpdateUser(context, id);
+    case HttpMethod.get:
+      return _onGetUsers(context);
     default:
       return Response.json(
         statusCode: HttpStatus.methodNotAllowed,
@@ -26,30 +26,28 @@ Future<Response> onRequest(RequestContext context, String id) async {
   }
 }
 
-Future<Response> _onUpdateUser(RequestContext context, String id) async {
-  final controler = context.read<UserControler>();
-  final body = await context.request.body();
-
-  final response = await controler.updateUserProfile(body: body, id: id);
-  if (response.isLeft) {
-    return Response.json(
-      statusCode: response.left.statusCode,
-      body: YinResponse(
-        result: YinFailure(
-          errorCode: response.left.errorCode,
-          time: DateTime.now(),
-          statusCode: response.left.statusCode,
-        ),
-        data: {},
-      ).toMap(),
-    );
-  } else {
+Future<Response> _onGetUsers(RequestContext context) async {
+  try {
+    final db = context.read<PostgresDatabase>();
+    final response = await db.select(tableName: UserDataSource.tableName);
     return Response.json(
       body: YinResponse(
         result: YinSuccess(
           time: DateTime.now(),
         ),
-        data: response.right.copyWith(password: '******').toJson(),
+        dataList: response,
+      ).toMap(),
+    );
+  } catch (e, s) {
+    return Response.json(
+      statusCode: 501,
+      body: YinResponse(
+        result: YinFailure(
+          errorCode: 'Error: $e - $s',
+          time: DateTime.now(),
+          statusCode: 501,
+        ),
+        data: {},
       ).toMap(),
     );
   }

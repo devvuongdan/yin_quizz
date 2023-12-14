@@ -14,6 +14,7 @@ class LoginDto with _$LoginDto {
   const factory LoginDto({
     required String? username,
     @Default('') @JsonKey(includeToJson: false) String? password,
+    @JsonKey(name: 'device_id') String? deviceId,
   }) = _LoginDto;
 
   /// {@macro LoginDto}

@@ -1,15 +1,17 @@
 // ignore_for_file: no_default_cases
 
 import 'dart:io';
-import 'package:backend/features/authentication/controller/authentication_controller.dart';
+
+import 'package:backend/features/users/datasource/user_datasource.dart';
+import 'package:backend/helpers/database_helper.dart';
 import 'package:backend/response/response.dart';
 import 'package:backend/response/result.dart';
 import 'package:dart_frog/dart_frog.dart';
 
 Future<Response> onRequest(RequestContext context) async {
   switch (context.request.method) {
-    case HttpMethod.post:
-      return _onDoLogin(context);
+    case HttpMethod.delete:
+      return _onDeleteUserByID(context);
     default:
       return Response.json(
         statusCode: HttpStatus.methodNotAllowed,
@@ -25,33 +27,33 @@ Future<Response> onRequest(RequestContext context) async {
   }
 }
 
-Future<Response> _onDoLogin(RequestContext context) async {
-  final controler = context.read<AuthenticationController>();
-  final body = await context.request.body();
-  final headers = context.request.headers;
-  final response = await controler.doLogin(body, headers);
-  if (response.isLeft) {
-    return Response.json(
-      statusCode: response.left.statusCode,
-      body: YinResponse(
-        result: YinFailure(
-          errorCode: response.left.errorCode,
-          time: DateTime.now(),
-          statusCode: response.left.statusCode,
-        ),
-        data: {},
-      ).toMap(),
+Future<Response> _onDeleteUserByID(RequestContext context) async {
+  try {
+    final db = context.read<PostgresDatabase>();
+    await db.delete(
+      tableName: UserDataSource.tableName,
+      id: context.request.headers['id'] ?? '',
     );
-  } else {
     return Response.json(
       body: YinResponse(
         result: YinSuccess(
           time: DateTime.now(),
         ),
-        data: response.right.toJson()
-          ..remove('id')
-          ..remove('created_at')
-          ..remove('exp'),
+        data: {
+          'id': context.request.headers['id'] ?? '',
+        },
+      ).toMap(),
+    );
+  } catch (e) {
+    return Response.json(
+      statusCode: 501,
+      body: YinResponse(
+        result: YinFailure(
+          errorCode: 'Error: $e',
+          time: DateTime.now(),
+          statusCode: 501,
+        ),
+        data: {},
       ).toMap(),
     );
   }

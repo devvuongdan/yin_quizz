@@ -1,4 +1,4 @@
-// ignore_for_file: invalid_annotation_target, depend_on_referenced_packages, public_member_api_docs
+// ignore_for_file: invalid_annotation_target, depend_on_referenced_packages,
 
 import 'package:backend/helpers/datetime_converter.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
@@ -31,6 +31,8 @@ class YinToken with _$YinToken {
 }
 
 @freezed
+
+///
 class YinRefreshToken with _$YinRefreshToken {
   /// {@macro user}
   const factory YinRefreshToken({
