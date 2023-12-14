@@ -10,6 +10,7 @@ dependencies:
 
   crypto: ^3.0.3
   dart_frog: ^1.0.0
+  dart_jsonwebtoken: ^2.12.1
   dotenv: ^4.2.0
   either_dart: ^1.0.0
   postgres: ^3.0.3

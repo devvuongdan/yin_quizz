@@ -46,7 +46,7 @@ class YinSuccess extends YinResult {
   Map<String, dynamic> toMap() {
     return <String, dynamic>{
       'code': code,
-      'statusCode': statusCode,
+      'status_code': statusCode,
       'time': time.toIso8601String(),
     };
   }

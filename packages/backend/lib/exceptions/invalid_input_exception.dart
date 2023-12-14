@@ -7,6 +7,8 @@ class InvalidUsernameException implements Exception {}
 
 class InvalidPasswordException implements Exception {}
 
+class IncorectPasswordException implements Exception {}
+
 class UsernameExistException implements Exception {}
 
 class DuplicateUidException implements Exception {}

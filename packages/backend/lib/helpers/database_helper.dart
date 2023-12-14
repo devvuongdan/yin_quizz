@@ -107,8 +107,15 @@ class PostgresDatabase {
 
   Future<List<Map<String, dynamic>>> select({
     required String tableName,
+    Map<String, dynamic>? objectToMap,
   }) async {
     try {
+      if (objectToMap != null) {
+        await createTableIfNotExist(
+          tableName: tableName,
+          objectToMap: objectToMap,
+        );
+      }
       final result = await connection.execute(
         'SELECT * FROM $tableName',
       );
