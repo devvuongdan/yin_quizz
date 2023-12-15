@@ -46,7 +46,6 @@ class TaskController {
   Future<Either<YinFailure, YinTask>> updateTask({
     required String body,
     required String userId,
-    required String taskId,
   }) async {
     final exceptions = <Type, int>{
       NotFoundException: 404,
@@ -57,6 +56,7 @@ class TaskController {
       final dto = UpdateTaskDto.fromJson(
         jsonDecode(body) as Map<String, dynamic>,
       );
+
       if (dto.id.isEmpty) {
         throw InvalidInputException();
       }
@@ -76,7 +76,7 @@ class TaskController {
 
   Future<Either<YinFailure, String>> deleteTask({
     required String userId,
-    required String taskId,
+    required String body,
   }) async {
     final exceptions = <Type, int>{
       NotFoundException: 404,
@@ -84,6 +84,12 @@ class TaskController {
       DataBaseException: 500,
     };
     try {
+      final taskId =
+          (jsonDecode(body) as Map<String, dynamic>)['id'].toString();
+
+      if (taskId.isEmpty) {
+        throw InvalidInputException();
+      }
       final result = await _repository.deleteTask(
         userId: userId,
         taskId: taskId,

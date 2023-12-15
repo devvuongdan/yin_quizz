@@ -13,9 +13,79 @@ Future<Response> onRequest(RequestContext context) async {
       return _onGet(context);
     case HttpMethod.post:
       return _onPost(context);
+    case HttpMethod.patch:
+      return _onPatch(context);
+    case HttpMethod.delete:
+      return _onDelete(context);
 
     default:
       return Response(body: 'Welcome to Yin Quizz!');
+  }
+}
+
+Future<Response> _onDelete(RequestContext context) async {
+  final user = context.read<YinUser>();
+  final body = await context.request.body();
+  final controller = context.read<TaskController>();
+
+  final response = await controller.deleteTask(
+    userId: user.id,
+    body: body,
+  );
+  if (response.isLeft) {
+    return Response.json(
+      statusCode: response.left.statusCode,
+      body: YinResponse(
+        result: YinFailure(
+          errorCode: response.left.errorCode,
+          time: DateTime.now(),
+          statusCode: response.left.statusCode,
+        ),
+        data: {},
+      ).toMap(),
+    );
+  } else {
+    return Response.json(
+      body: YinResponse(
+        result: YinSuccess(
+          time: DateTime.now(),
+        ),
+        data: {'id': response.right},
+      ).toMap(),
+    );
+  }
+}
+
+Future<Response> _onPatch(RequestContext context) async {
+  final user = context.read<YinUser>();
+  final body = await context.request.body();
+  final controller = context.read<TaskController>();
+
+  final response = await controller.updateTask(
+    userId: user.id,
+    body: body,
+  );
+  if (response.isLeft) {
+    return Response.json(
+      statusCode: response.left.statusCode,
+      body: YinResponse(
+        result: YinFailure(
+          errorCode: response.left.errorCode,
+          time: DateTime.now(),
+          statusCode: response.left.statusCode,
+        ),
+        data: {},
+      ).toMap(),
+    );
+  } else {
+    return Response.json(
+      body: YinResponse(
+        result: YinSuccess(
+          time: DateTime.now(),
+        ),
+        data: response.right.toJson(),
+      ).toMap(),
+    );
   }
 }
 

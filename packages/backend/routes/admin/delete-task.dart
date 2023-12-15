@@ -1,5 +1,6 @@
 // ignore_for_file: no_default_cases
 
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:backend/features/tasks/datasource/tasks_datasource.dart';
@@ -30,9 +31,10 @@ Future<Response> onRequest(RequestContext context) async {
 Future<Response> _onDeleteTaskBy(RequestContext context) async {
   try {
     final db = context.read<PostgresDatabase>();
+    final body = await context.request.body();
     await db.delete(
       tableName: TaskDatasource.tableName,
-      id: context.request.headers['id'] ?? '',
+      id: (jsonEncode(body) as Map<String, dynamic>)['id'].toString(),
     );
     return Response.json(
       body: YinResponse(

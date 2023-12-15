@@ -202,9 +202,9 @@ class AuthenticationController {
     try {
       final authHeader = headers[HttpHeaders.authorizationHeader] ?? '';
       final accessToken = authHeader.toString().replaceFirst('Bearer ', '');
-      print(accessToken);
+
       final tokens = await authenticationRepository.getTokens();
-      print(tokens);
+
       final index =
           tokens.indexWhere((element) => element.accessToken == accessToken);
       if (index < 0) {
@@ -216,7 +216,7 @@ class AuthenticationController {
         }
         final newToken = tokens[index]
             .copyWith(exp: DateTime.now().add(const Duration(minutes: 5)));
-        print(newToken);
+
         await authenticationRepository.updateToken(
           userId: tokens[index].userId,
           newToken: newToken,
