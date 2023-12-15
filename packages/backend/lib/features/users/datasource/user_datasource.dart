@@ -31,7 +31,7 @@ class UserDataSource {
         updatePwAt: DateTime.now(),
       );
       await _database.createTableIfNotExist(
-        tableName: 'yinuser',
+        tableName: tableName,
         objectToMap: newUser.toJson(),
       );
       final userDb = await getUserByUsername(dto.username ?? '');

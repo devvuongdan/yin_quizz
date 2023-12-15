@@ -1,4 +1,4 @@
-// ignore_for_file: public_member_api_docs, sort_constructors_first
+// ignore_for_file: public_member_api_docs, sort_constructors_first, avoid_print
 import 'dart:convert';
 import 'dart:io';
 
@@ -13,6 +13,7 @@ import 'package:backend/features/authentication/repository/authentication_reposi
 import 'package:backend/features/users/model/insert_user_dto/insert_user_dto.dart';
 import 'package:backend/features/users/model/user.dart';
 import 'package:backend/features/users/repository/user_repository.dart';
+import 'package:backend/helpers/api_helper.dart';
 import 'package:backend/response/result.dart';
 import 'package:backend/services/encrypt.dart';
 import 'package:backend/services/jwt_service.dart';
@@ -36,6 +37,7 @@ class AuthenticationController {
       InvalidUsernameException: 400,
       InvalidPasswordException: 400,
       DataBaseException: 500,
+      IncorectPasswordException: 400,
     };
     try {
       final dto = LoginDto.fromJson(
@@ -62,22 +64,15 @@ class AuthenticationController {
             'id': users[idx].id,
             'username': users[idx].username,
             'password': users[idx].password,
-            //'exp': now.add(const Duration(minutes: 5)).millisecondsSinceEpoch,
             'device_id': dto.deviceId,
           };
           final accessToken = JWTService(AppConstant.env).sign(map);
 
-          // final refreshToken = JWTService(AppConstant.env).sign(
-          //   map,
-          //   key: AppConstant.env['JWT_SECRET_REFRESH_TOKEN'],
-          // );
-
           final newToken = YinToken(
             userId: users[idx].id,
             accessToken: accessToken,
-            // refreshToken: YinRefreshToken(value: refreshToken),
             createdAt: now,
-            exp: now.add(const Duration(hours: 1)),
+            exp: now.add(const Duration(minutes: 10)),
           );
 
           final dbTokens = await authenticationRepository.getTokens(
@@ -95,6 +90,7 @@ class AuthenticationController {
             final updateToken = dbTokens[idx2].copyWith(
               accessToken: accessToken,
               createdAt: DateTime.now(),
+              exp: DateTime.now().add(const Duration(minutes: 10)),
             );
             //update
             await authenticationRepository.updateToken(
@@ -108,17 +104,11 @@ class AuthenticationController {
           return Right(newToken);
         }
       }
-    } catch (e) {
-      return Left(
-        YinFailure(
-          time: DateTime.now(),
-          errorCode: exceptions.keys.contains(e.runtimeType)
-              ? 'Error: ${e.runtimeType}!'
-              : 'Un-Handled-Exception!',
-          statusCode: exceptions.keys.contains(e.runtimeType)
-              ? (exceptions[e.runtimeType] ?? 500)
-              : 501,
-        ),
+    } catch (e, s) {
+      return APIHelper.handleException(
+        exceptions: exceptions,
+        e: e,
+        s: s,
       );
     }
   }
@@ -142,17 +132,11 @@ class AuthenticationController {
       } else {
         throw NotFoundException();
       }
-    } catch (e) {
-      return Left(
-        YinFailure(
-          time: DateTime.now(),
-          errorCode: exceptions.keys.contains(e.runtimeType)
-              ? 'Error: ${e.runtimeType}!'
-              : 'Un-Handled-Exception!',
-          statusCode: exceptions.keys.contains(e.runtimeType)
-              ? (exceptions[e.runtimeType] ?? 500)
-              : 501,
-        ),
+    } catch (e, s) {
+      return APIHelper.handleException(
+        exceptions: exceptions,
+        e: e,
+        s: s,
       );
     }
   }
@@ -167,17 +151,11 @@ class AuthenticationController {
       final tokens = await authenticationRepository.getTokens();
 
       return Right(tokens);
-    } catch (e) {
-      return Left(
-        YinFailure(
-          time: DateTime.now(),
-          errorCode: exceptions.keys.contains(e.runtimeType)
-              ? 'Error: ${e.runtimeType}!'
-              : 'Un-Handled-Exception!',
-          statusCode: exceptions.keys.contains(e.runtimeType)
-              ? (exceptions[e.runtimeType] ?? 500)
-              : 501,
-        ),
+    } catch (e, s) {
+      return APIHelper.handleException(
+        exceptions: exceptions,
+        e: e,
+        s: s,
       );
     }
   }
@@ -200,17 +178,11 @@ class AuthenticationController {
       final user = await userRepository.createUserProfile(dto: dto);
 
       return Right(user);
-    } catch (e) {
-      return Left(
-        YinFailure(
-          time: DateTime.now(),
-          errorCode: exceptions.keys.contains(e.runtimeType)
-              ? 'Error: ${e.runtimeType}!'
-              : 'Un-Handled-Exception!',
-          statusCode: exceptions.keys.contains(e.runtimeType)
-              ? (exceptions[e.runtimeType] ?? 500)
-              : 501,
-        ),
+    } catch (e, s) {
+      return APIHelper.handleException(
+        exceptions: exceptions,
+        e: e,
+        s: s,
       );
     }
   }
@@ -230,7 +202,9 @@ class AuthenticationController {
     try {
       final authHeader = headers[HttpHeaders.authorizationHeader] ?? '';
       final accessToken = authHeader.toString().replaceFirst('Bearer ', '');
+      print(accessToken);
       final tokens = await authenticationRepository.getTokens();
+      print(tokens);
       final index =
           tokens.indexWhere((element) => element.accessToken == accessToken);
       if (index < 0) {
@@ -242,6 +216,7 @@ class AuthenticationController {
         }
         final newToken = tokens[index]
             .copyWith(exp: DateTime.now().add(const Duration(minutes: 5)));
+        print(newToken);
         await authenticationRepository.updateToken(
           userId: tokens[index].userId,
           newToken: newToken,
@@ -252,17 +227,11 @@ class AuthenticationController {
 
         return Right(result);
       }
-    } catch (e) {
-      return Left(
-        YinFailure(
-          time: DateTime.now(),
-          errorCode: exceptions.keys.contains(e.runtimeType)
-              ? 'Error: ${e.runtimeType}!'
-              : 'Un-Handled-Exception!',
-          statusCode: exceptions.keys.contains(e.runtimeType)
-              ? (exceptions[e.runtimeType] ?? 500)
-              : 501,
-        ),
+    } catch (e, s) {
+      return APIHelper.handleException(
+        exceptions: exceptions,
+        e: e,
+        s: s,
       );
     }
   }

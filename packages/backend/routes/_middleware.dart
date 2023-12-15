@@ -3,6 +3,9 @@ import 'package:backend/exceptions/unauthorized_exception.dart';
 import 'package:backend/features/authentication/controller/authentication_controller.dart';
 import 'package:backend/features/authentication/datasource/authentication_datasource.dart';
 import 'package:backend/features/authentication/repository/authentication_repository.dart';
+import 'package:backend/features/tasks/controller/task_controller.dart';
+import 'package:backend/features/tasks/datasource/tasks_datasource.dart';
+import 'package:backend/features/tasks/repository/task_repository.dart';
 import 'package:backend/features/users/controller/user_controller.dart';
 import 'package:backend/features/users/datasource/user_datasource.dart';
 import 'package:backend/features/users/model/user.dart';
@@ -32,11 +35,16 @@ Handler middleware(Handler handler) {
       authenticationRepository: authenticationRepository,
       userRepository: userRepository,
     );
+
+    final taskDatasource = TaskDatasource(database);
+    final taskRepository = TaskRepository(taskDatasource);
+    final taskController = TaskController(taskRepository);
     return await handler(
       context
           .provide<PostgresDatabase>(() => database)
           .provide<AuthenticationController>(() => authenticationController)
-          .provide<UserControler>(() => userControler),
+          .provide<UserControler>(() => userControler)
+          .provide<TaskController>(() => taskController),
     );
   };
 }
@@ -55,6 +63,7 @@ Handler verifyJwt(Handler handler) {
       final userDb = await context
           .read<AuthenticationController>()
           .decodeJWT(headers: headers);
+
       if (userDb.isRight) {
         return handler(
           context.provide<YinUser>(

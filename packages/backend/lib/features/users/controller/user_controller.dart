@@ -11,6 +11,7 @@ import 'package:backend/features/users/model/insert_user_dto/insert_user_dto.dar
 import 'package:backend/features/users/model/update_user_dto/update_user_dto.dart';
 import 'package:backend/features/users/model/user.dart';
 import 'package:backend/features/users/repository/user_repository.dart';
+import 'package:backend/helpers/api_helper.dart';
 import 'package:backend/response/result.dart';
 import 'package:either_dart/either.dart';
 
@@ -39,18 +40,11 @@ class UserControler {
       final user = await _repository.createUserProfile(dto: dto);
 
       return Right(user);
-    } catch (e) {
-      print('Error: $e');
-      return Left(
-        YinFailure(
-          time: DateTime.now(),
-          errorCode: exceptions.keys.contains(e.runtimeType)
-              ? 'Error: ${e.runtimeType}!'
-              : 'Un-Handled-Exception!',
-          statusCode: exceptions.keys.contains(e.runtimeType)
-              ? (exceptions[e.runtimeType] ?? 500)
-              : 501,
-        ),
+    } catch (e, s) {
+      return APIHelper.handleException(
+        exceptions: exceptions,
+        e: e,
+        s: s,
       );
     }
   }
@@ -73,18 +67,11 @@ class UserControler {
       );
       final result = await _repository.updateUserProfile(dto: dto, id: id);
       return Right(result);
-    } catch (e) {
-      print('Error: $e');
-      return Left(
-        YinFailure(
-          time: DateTime.now(),
-          errorCode: exceptions.keys.contains(e.runtimeType)
-              ? 'Error: ${e.runtimeType}!'
-              : 'Un-Handled-Exception!',
-          statusCode: exceptions.keys.contains(e.runtimeType)
-              ? (exceptions[e.runtimeType] ?? 500)
-              : 501,
-        ),
+    } catch (e, s) {
+      return APIHelper.handleException(
+        exceptions: exceptions,
+        e: e,
+        s: s,
       );
     }
   }
@@ -97,18 +84,11 @@ class UserControler {
     try {
       final users = await _repository.getUsers();
       return Right(users);
-    } catch (e) {
-      print('Error: $e');
-      return Left(
-        YinFailure(
-          time: DateTime.now(),
-          errorCode: exceptions.keys.contains(e.runtimeType)
-              ? 'Error: ${e.runtimeType}!'
-              : 'Un-Handled-Exception!',
-          statusCode: exceptions.keys.contains(e.runtimeType)
-              ? (exceptions[e.runtimeType] ?? 500)
-              : 501,
-        ),
+    } catch (e, s) {
+      return APIHelper.handleException(
+        exceptions: exceptions,
+        e: e,
+        s: s,
       );
     }
   }
@@ -132,18 +112,11 @@ class UserControler {
           ),
         );
       }
-    } catch (e) {
-      print('Error: $e');
-      return Left(
-        YinFailure(
-          time: DateTime.now(),
-          errorCode: exceptions.keys.contains(e.runtimeType)
-              ? 'Error: ${e.runtimeType}!'
-              : 'Un-Handled-Exception!',
-          statusCode: exceptions.keys.contains(e.runtimeType)
-              ? (exceptions[e.runtimeType] ?? 500)
-              : 501,
-        ),
+    } catch (e, s) {
+      return APIHelper.handleException(
+        exceptions: exceptions,
+        e: e,
+        s: s,
       );
     }
   }
@@ -156,18 +129,11 @@ class UserControler {
     try {
       final userId = await _repository.deleteUserByID(id);
       return Right(userId);
-    } catch (e) {
-      print('Error: $e');
-      return Left(
-        YinFailure(
-          time: DateTime.now(),
-          errorCode: exceptions.keys.contains(e.runtimeType)
-              ? 'Error: ${e.runtimeType}!'
-              : 'Un-Handled-Exception!',
-          statusCode: exceptions.keys.contains(e.runtimeType)
-              ? (exceptions[e.runtimeType] ?? 500)
-              : 501,
-        ),
+    } catch (e, s) {
+      return APIHelper.handleException(
+        exceptions: exceptions,
+        e: e,
+        s: s,
       );
     }
   }
